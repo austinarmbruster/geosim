@@ -19,23 +19,64 @@ type entity struct {
 	Name        string    `json:"name,omitempty"`
 	Location    location  `json:"location,omitempty"`
 	centerPoint location  `json:"-"`
+	action action `json:"-"`
+	mover movement `json:"-"`
+}
+
+type action func(entity *entity) error
+
+type movement interface{
+	move(last location) (next location, when time.Time, err error)
+}
+
+type circular struct {
+	centerPoint location
+	radius float64
+	angle float64
+}
+
+func (c circular) move(_ location) (next location, when time.Time, err error) {
+	next = location{
+		Lat: c.centerPoint.Lat + math.Cos(c.angle)*c.radius,
+		Lon: c.centerPoint.Lon + math.Sin(c.angle)*c.radius,
+	}
+	when = time.Now()
+	return next, when, nil
+}
+
+func (e *entity) tick() error {
+	next, when, err := e.mover.move(e.Location)
+	if err != nil {
+		return err
+	}
+
+	e.Location = next
+	e.Timestamp = when
+	
+	// TODO: this api needs to change
+	e.action(e)
+
+	return nil
 }
 
 func New(name string, lat, lon float64) *entity {
-	angle := float64(0)
-	radius := float64(0.08)
-	return &entity{
-		Name: name,
-		centerPoint: location{
+	mover := circular{
+		centerPoint: location {
 			Lat: lat,
 			Lon: lon,
 		},
-		Location: location{
-			Lat: lat + math.Cos(angle)*radius,
-			Lon: lon + math.Sin(angle)*radius,
-		},
-		Timestamp: time.Now(),
+		radius: float64(0.08),
+		angle: float64(0),
 	}
+
+	e := &entity{
+		Name: name,
+	}
+
+	e.action = post
+	e.mover = mover
+
+	return e
 }
 
 func rotate(e *entity, radius, angle float64) {
@@ -74,10 +115,10 @@ func main() {
 	}
 }
 
-func post(e *entity) {
+func post(e *entity) error {
 	jBytes, err := json.Marshal(e)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	buff := bytes.NewBuffer(jBytes)
@@ -87,15 +128,14 @@ func post(e *entity) {
 	}
 
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func tick(assets []*entity, angle float64) {
-	radius := 0.08
 	for _, e := range assets {
-		rotate(e, radius, angle)
-		//print(e)
-		post(e)
+		e.tick()
 	}
 }

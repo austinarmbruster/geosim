@@ -18,24 +18,27 @@ type entity struct {
 	Timestamp   time.Time `json:"@timestamp,omitempty"`
 	Name        string    `json:"name,omitempty"`
 	Location    location  `json:"location,omitempty"`
-	centerPoint location  `json:"-"`
-	action action `json:"-"`
-	mover movement `json:"-"`
+	Tag         []string  `json:"tag,omitempty"`
+	centerPoint location  `json:"-,omitempty"`
+	action      action    `json:"-,omitempty"`
+	mover       movement  `json:"-,omitempty"`
 }
 
 type action func(entity *entity) error
 
-type movement interface{
+type movement interface {
 	move(last location) (next location, when time.Time, err error)
 }
 
 type circular struct {
 	centerPoint location
-	radius float64
-	angle float64
+	radius      float64
+	angle       float64
+	theta       float64
 }
 
-func (c circular) move(_ location) (next location, when time.Time, err error) {
+func (c *circular) move(_ location) (next location, when time.Time, err error) {
+	c.angle += c.theta
 	next = location{
 		Lat: c.centerPoint.Lat + math.Cos(c.angle)*c.radius,
 		Lon: c.centerPoint.Lon + math.Sin(c.angle)*c.radius,
@@ -52,7 +55,7 @@ func (e *entity) tick() error {
 
 	e.Location = next
 	e.Timestamp = when
-	
+
 	// TODO: this api needs to change
 	e.action(e)
 
@@ -60,21 +63,24 @@ func (e *entity) tick() error {
 }
 
 func New(name string, lat, lon float64) *entity {
+	thetaDelta := float64(15) / 180 * math.Pi
 	mover := circular{
-		centerPoint: location {
+		centerPoint: location{
 			Lat: lat,
 			Lon: lon,
 		},
 		radius: float64(0.08),
-		angle: float64(0),
+		angle:  float64(0.0),
+		theta:  thetaDelta,
 	}
 
 	e := &entity{
 		Name: name,
+		Tag:  []string{name, "common"},
 	}
 
 	e.action = post
-	e.mover = mover
+	e.mover = &mover
 
 	return e
 }
@@ -85,13 +91,15 @@ func rotate(e *entity, radius, angle float64) {
 	e.Timestamp = time.Now()
 }
 
-func print(e *entity) {
+func print(e *entity) error {
 	jBytes, err := json.Marshal(e)
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Println(string(jBytes))
+
+	return nil
 }
 
 func main() {
@@ -109,7 +117,7 @@ func main() {
 	for {
 		select {
 		case <-ticker.C:
-			tick(assets,angle)
+			tick(assets, angle)
 			angle += thetaDelta
 		}
 	}
@@ -122,7 +130,7 @@ func post(e *entity) error {
 	}
 
 	buff := bytes.NewBuffer(jBytes)
-	resp, err := http.Post("https://elastic:zE2AARvtp5GLLRJsc6WEvZ61@geo.es.eastus2.azure.elastic-cloud.com:9243/file_points/_doc", "application/json", buff)
+	resp, err := http.Post("https://elastic:kaOHnJc9q06TmqSwTk4wsxJJ@drilldown.es.us-central1.gcp.cloud.es.io:9243/aircraft/_doc", "application/json", buff)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

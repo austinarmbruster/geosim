@@ -1,0 +1,12 @@
+{
+  "mappings": {
+    "properties": {
+      "coordinates": {
+        "type": "geo_shape"
+      },
+      "label": {
+        "type": "keyword"
+      }
+    }
+  }
+}

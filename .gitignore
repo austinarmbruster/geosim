@@ -1,3 +1,5 @@
 *.ndjson
 
 geosim
+
+geosim.yaml

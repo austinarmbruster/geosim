@@ -1,3 +1,7 @@
+variable "name" {
+    type = string
+    default = "tracking-containment"
+}
 variable "user_version" {
   type = string
   default = "8.8.1"

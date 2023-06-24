@@ -16,7 +16,7 @@ provider "ec" {
 }
 
 resource "ec_deployment" "user" {
-  name = "tf-user-8"
+  name = "${var.name}-user"
 
   region                 = var.region
   version                = var.user_version
@@ -56,7 +56,7 @@ EOF
 }
 
 resource "ec_deployment" "olly" {
-  name = "tf-olly-8"
+  name = "${var.name}-olly"
 
   region                 = var.region
   version                = var.olly_version

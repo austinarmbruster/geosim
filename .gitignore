@@ -3,3 +3,10 @@
 geosim
 
 geosim.yaml
+geosim-config.yaml
+
+.terraform/
+.terraform*
+terraform.*
+
+api-key.txt

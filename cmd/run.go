@@ -138,23 +138,6 @@ func New(name string, lat, lon float64, a action) *entity {
 	return e
 }
 
-func rotate(e *entity, radius, angle float64) {
-	e.Location.Lat = e.centerPoint.Lat + math.Cos(angle)*radius
-	e.Location.Lon = e.centerPoint.Lon + math.Sin(angle)*radius
-	e.Timestamp = time.Now()
-}
-
-func print(e *entity) error {
-	jBytes, err := json.Marshal(e)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(string(jBytes))
-
-	return nil
-}
-
 func (s *simulator) execute() {
 
 	assets := make([]*entity, 4)
@@ -167,12 +150,9 @@ func (s *simulator) execute() {
 
 	angle := thetaDelta
 	ticker := time.NewTicker(3 * time.Second)
-	for {
-		select {
-		case <-ticker.C:
-			tick(assets, angle)
-			angle += thetaDelta
-		}
+	for range ticker.C {
+		tick(assets, angle)
+		angle += thetaDelta
 	}
 }
 

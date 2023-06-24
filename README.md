@@ -1,21 +1,31 @@
 
+## Sample State Queries
 
-PUT aircraft
+```
+GET .kibana_task_manager/_search?size=40
+
+GET .kibana-event-log-*/_search
 {
-    "mappings": {
-        "properties": {
-            "@timestamp": {
-            "type": "date_nanos"
-            },
-            "location": {
-            "type": "geo_point"
-            },
-            "name": {
-            "type": "keyword"
-            },
-            "tag": {
-            "type": "keyword"
-            }
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "rule.name": "filtered"
+          }
+        },
+        {
+          "match": {
+            "event.action": "execute"
+          }
+        },
+        {
+          "match": {
+            "kibana.alert.rule.execution.metrics.alert_counts.active": 1
+          }
         }
+      ]
     }
+  }
 }
+```

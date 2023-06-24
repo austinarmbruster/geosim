@@ -41,7 +41,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("user", "u", "", "Elasticsearch user name")
 	rootCmd.PersistentFlags().StringP("password", "p", "", "Elasticsearch password")
 
-	viper.SetConfigName("geosim")        // name of config file (without extension)
+	viper.SetConfigName("geosim-config") // name of config file (without extension)
 	viper.SetConfigType("yaml")          // REQUIRED if the config file does not have the extension in the name
 	viper.AddConfigPath("/etc/geosim/")  // path to look for the config file in
 	viper.AddConfigPath("$HOME/.geosim") // call multiple times to add many search paths

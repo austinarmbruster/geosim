@@ -77,8 +77,11 @@ func doRemove(cmd *cobra.Command, args []string) {
 		}
 
 		if resp.StatusCode >= 400 {
-			io.Copy(os.Stderr, resp.Body)
+			if viper.GetBool("verbose") {
+				io.Copy(os.Stderr, resp.Body)
+			}
 			if viper.GetBool("force") {
+				log.Printf("Proceeding despite the error response for %s\n", v.label)
 				continue
 			}
 			log.Fatalf("HTTP error from the server: [url:%s] [code:%v]: %v",

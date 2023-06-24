@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/savaki/jq"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -45,6 +46,104 @@ func doInstall(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	err := doLoad()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = doRuleEnable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+func doRuleEnable() error {
+	client := http.Client{Timeout: 5 * time.Second}
+
+	rawData, err := getRules(&client)
+	if err != nil {
+		return fmt.Errorf("error getting rules: %w", err)
+	}
+
+	for i := 0; i < 4; i++ {
+		err := enableRule(&client, rawData, i)
+		if err != nil {
+			return fmt.Errorf("error enabling rule %v: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+func getRules(client *http.Client) ([]byte, error) {
+	url := fmt.Sprintf("%s/api/alerting/rules/_find", viper.GetString("kibana-url"))
+	req, err := http.NewRequest(http.MethodGet, url, http.NoBody)
+	if err != nil {
+		return nil, err
+	}
+
+	userName := viper.GetString("user")
+	password := viper.GetString("password")
+	req.SetBasicAuth(userName, password)
+	req.Header.Set("kbn-xsrf", "true")
+
+	resp, err := client.Do(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	buff := &bytes.Buffer{}
+	_, err = io.Copy(buff, resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return buff.Bytes(), nil
+}
+
+func enableRule(client *http.Client, rawData []byte, ruleNumber int) error {
+	op, err := jq.Parse(fmt.Sprintf(".data.[%v].id", ruleNumber))
+	if err != nil {
+		return err
+	}
+
+	data, err := op.Apply(rawData)
+	if err != nil {
+		return err
+	}
+	id := strings.Replace(string(data), "\"", "", -1)
+	fmt.Println(id)
+
+	url := fmt.Sprintf("%s/api/alerting/rule/%s/_enable", viper.GetString("kibana-url"), id)
+	req, err := http.NewRequest(http.MethodPost, url, http.NoBody)
+	if err != nil {
+		return err
+	}
+
+	userName := viper.GetString("user")
+	password := viper.GetString("password")
+	req.SetBasicAuth(userName, password)
+	req.Header.Set("kbn-xsrf", "true")
+
+	resp, err := client.Do(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+
+	if err != nil {
+		return err
+	}
+	io.Copy(os.Stdout, resp.Body)
+
+	// TODO confirm that the rule was enabled
+	return nil
+}
+
+func doLoad() error {
 	b := &bytes.Buffer{}
 	w := multipart.NewWriter(b)
 	fw, err := w.CreateFormFile("file", "export.ndjson")
@@ -119,7 +218,7 @@ func doInstall(cmd *cobra.Command, args []string) {
 		}
 
 		if err != nil {
-			log.Fatalf("failed to create a part of the config (%s): %v", v.label, err)
+			return fmt.Errorf("failed to create a part of the config (%s): %v", v.label, err)
 		}
 
 		io.Copy(os.Stderr, resp.Body)
@@ -130,6 +229,8 @@ func doInstall(cmd *cobra.Command, args []string) {
 
 		log.Printf("\nSuccessfully installed %s\n", v.label)
 	}
+
+	return nil
 }
 
 func init() {

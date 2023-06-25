@@ -223,43 +223,41 @@ func New(name string, opts ...entityOption) *entity {
 func (s *simulator) execute() {
 
 	assets := make([]*entity, 0, 7)
-	/*
-		assets = append(assets,
-			New("delta",
-				WithTag("delta"),
-				WithTag("common"),
-				WithBasicCircleMover(38.893277091526166, -76.91043222058185),
-				WithAction(s.post),
-			))
-		assets = append(assets,
-			New("alpha",
-				WithTag("alpha"),
-				WithTag("common"),
-				WithBasicCircleMover(38.804935386594465, -77.02314564908244),
-				WithAction(s.post),
-			))
-		assets = append(assets,
-			New("beta",
-				WithTag("beta"),
-				WithTag("common"),
-				WithBasicCircleMover(38.93466616893009, -77.12009876227299),
-				WithAction(s.post),
-			))
-		assets = append(assets,
-			New("charlie",
-				WithTag("charlie"),
-				WithTag("common"),
-				WithBasicCircleMover(38.99534659899706, -77.04127967221889),
-				WithAction(s.post),
-			))
-		assets = append(assets,
-			New("delta",
-				WithTag("delta"),
-				WithTag("common"),
-				WithBasicCircleMover(38.893277091526166, -76.91043222058185),
-				WithAction(s.post),
-			))
-	*/
+	assets = append(assets,
+		New("delta",
+			WithTag("delta"),
+			WithTag("common"),
+			WithBasicCircleMover(38.893277091526166, -76.91043222058185),
+			WithAction(s.post),
+		))
+	assets = append(assets,
+		New("alpha",
+			WithTag("alpha"),
+			WithTag("common"),
+			WithBasicCircleMover(38.804935386594465, -77.02314564908244),
+			WithAction(s.post),
+		))
+	assets = append(assets,
+		New("beta",
+			WithTag("beta"),
+			WithTag("common"),
+			WithBasicCircleMover(38.93466616893009, -77.12009876227299),
+			WithAction(s.post),
+		))
+	assets = append(assets,
+		New("charlie",
+			WithTag("charlie"),
+			WithTag("common"),
+			WithBasicCircleMover(38.99534659899706, -77.04127967221889),
+			WithAction(s.post),
+		))
+	assets = append(assets,
+		New("delta",
+			WithTag("delta"),
+			WithTag("common"),
+			WithBasicCircleMover(38.893277091526166, -76.91043222058185),
+			WithAction(s.post),
+		))
 
 	a := location{
 		Lat: 38.81451,
